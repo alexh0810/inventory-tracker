@@ -22,9 +22,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Download } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useState } from 'react';
+import { convertToCSV, downloadCSV } from '@/lib/csv-utils';
 
 interface Item {
   _id: string;
@@ -53,6 +54,14 @@ export function CurrentStockLevels() {
     },
   });
 
+  const handleExportCSV = () => {
+    if (!data?.items) return;
+
+    const csvContent = convertToCSV(data.items);
+    const timestamp = new Date().toISOString().split('T')[0];
+    downloadCSV(csvContent, `stock-levels-${timestamp}.csv`);
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error loading stock levels</div>;
 
@@ -71,7 +80,18 @@ export function CurrentStockLevels() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Current Stock Levels</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle>Current Stock Levels</CardTitle>
+          <Button
+            onClick={handleExportCSV}
+            variant="default"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
