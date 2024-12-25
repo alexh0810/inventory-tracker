@@ -44,10 +44,12 @@ export function CurrentStockLevels() {
     onCompleted: () => {
       toast.success('Item deleted successfully');
       setIsDeleteDialogOpen(false);
+      setItemToDelete(null);
     },
     onError: (error) => {
       toast.error(`Error deleting item: ${error.message}`);
       setIsDeleteDialogOpen(false);
+      setItemToDelete(null);
     },
   });
 
@@ -89,15 +91,22 @@ export function CurrentStockLevels() {
                 <TableCell>{item.quantity}</TableCell>
                 <TableCell>
                   <AlertDialog
-                    open={isDeleteDialogOpen}
-                    onOpenChange={setIsDeleteDialogOpen}
+                    open={isDeleteDialogOpen && itemToDelete === item._id}
+                    onOpenChange={(open) => {
+                      setIsDeleteDialogOpen(open);
+                      if (!open) setItemToDelete(null);
+                    }}
                   >
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="ghost"
                         size="sm"
+                        aria-label="Delete item"
                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => setItemToDelete(item._id)}
+                        onClick={() => {
+                          setItemToDelete(item._id);
+                          setIsDeleteDialogOpen(true);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
