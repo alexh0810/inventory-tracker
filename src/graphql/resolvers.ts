@@ -40,6 +40,26 @@ export const resolvers = {
       { input }: { input: CreateItemInput }
     ): Promise<IItem> => {
       await connectDB();
+
+      // Convert name to lowercase for case-insensitive comparison
+      const normalizedName = input.name.toLowerCase();
+
+      // Try to find an existing item with the same name (case-insensitive)
+      const existingItem = await Item.findOne({
+        name: { $regex: new RegExp(`^${normalizedName}$`, 'i') },
+      });
+
+      if (existingItem) {
+        // If item exists, update the quantity and other fields if provided
+        existingItem.quantity += input.quantity;
+        if (input.minThreshold) existingItem.minThreshold = input.minThreshold;
+        if (input.category) existingItem.category = input.category;
+
+        await existingItem.save();
+        return existingItem;
+      }
+
+      // If item doesn't exist, create a new one
       const item = new Item(input);
       await item.save();
       return item;
@@ -68,9 +88,8 @@ export const resolvers = {
         return 'LOW';
       } else if (parent.quantity <= parent.minThreshold * 1.5) {
         return 'MEDIUM';
-      } else {
-        return 'GOOD';
       }
+      return 'GOOD';
     },
   },
 };

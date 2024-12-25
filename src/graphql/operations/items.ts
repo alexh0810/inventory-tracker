@@ -26,4 +26,22 @@ export const CREATE_ITEM = gql`
   }
 `;
 
-// Add other operations (UPDATE_ITEM, DELETE_ITEM, etc.)
+export const UPDATE_ITEM = gql`
+  mutation UpdateItem($id: ID!, $input: UpdateItemInput!) {
+    updateItem(id: $id, input: $input) {
+      _id
+      name
+      quantity
+      minThreshold
+      category
+    }
+  }
+`;
+
+export const DELETE_ITEM = gql`
+  mutation DeleteItem($_id: ID!) {
+    deleteItem(_id: $_id) {
+      _id
+    }
+  }
+`;

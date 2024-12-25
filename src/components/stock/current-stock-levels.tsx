@@ -1,0 +1,139 @@
+// src/components/stock/current-stock-levels.tsx
+import { useQuery, useMutation } from '@apollo/client';
+import { GET_ITEMS, DELETE_ITEM } from '@/graphql/operations/items';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Trash2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { useState } from 'react';
+
+interface Item {
+  _id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  minThreshold: number;
+}
+
+export function CurrentStockLevels() {
+  const { data, loading, error } = useQuery(GET_ITEMS);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+
+  const [deleteItem] = useMutation(DELETE_ITEM, {
+    refetchQueries: [{ query: GET_ITEMS }],
+    onCompleted: () => {
+      toast.success('Item deleted successfully');
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (error) => {
+      toast.error(`Error deleting item: ${error.message}`);
+      setIsDeleteDialogOpen(false);
+    },
+  });
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error loading stock levels</div>;
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+
+    try {
+      await deleteItem({
+        variables: { _id: itemToDelete },
+      });
+    } catch (error) {
+      console.error('Delete error:', error);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Current Stock Levels</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Item</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Quantity</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data?.items.map((item: Item) => (
+              <TableRow key={item._id}>
+                <TableCell>{item.name}</TableCell>
+                <TableCell>{item.category.toLowerCase()}</TableCell>
+                <TableCell>{item.quantity}</TableCell>
+                <TableCell>
+                  <AlertDialog
+                    open={isDeleteDialogOpen}
+                    onOpenChange={setIsDeleteDialogOpen}
+                  >
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setItemToDelete(item._id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-white">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Item</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete &quot;{item.name}
+                          &quot;? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel
+                          onClick={() => {
+                            setIsDeleteDialogOpen(false);
+                            setItemToDelete(null);
+                          }}
+                        >
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
