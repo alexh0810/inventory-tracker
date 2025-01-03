@@ -1,4 +1,4 @@
-// src/components/stock/current-stock-levels.tsx
+'use client';
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_ITEMS, DELETE_ITEM } from '@/graphql/operations/items';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,10 +22,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Trash2, Download } from 'lucide-react';
+import { Trash2, Download, Plus, Pencil } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useState } from 'react';
 import { convertToCSV, downloadCSV } from '@/lib/csv-utils';
+import { useRouter } from 'next/navigation';
 
 interface Item {
   _id: string;
@@ -36,6 +37,7 @@ interface Item {
 }
 
 export function CurrentStockLevels() {
+  const router = useRouter();
   const { data, loading, error } = useQuery(GET_ITEMS);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
@@ -82,15 +84,26 @@ export function CurrentStockLevels() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Current Stock Levels</CardTitle>
-          <Button
-            onClick={handleExportCSV}
-            variant="default"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Export CSV
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => router.push('/stock/add')}
+              variant="default"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Item
+            </Button>
+            <Button
+              onClick={handleExportCSV}
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -110,53 +123,63 @@ export function CurrentStockLevels() {
                 <TableCell>{item.category.toLowerCase()}</TableCell>
                 <TableCell>{item.quantity}</TableCell>
                 <TableCell>
-                  <AlertDialog
-                    open={isDeleteDialogOpen && itemToDelete === item._id}
-                    onOpenChange={(open) => {
-                      setIsDeleteDialogOpen(open);
-                      if (!open) setItemToDelete(null);
-                    }}
-                  >
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Delete item"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => {
-                          setItemToDelete(item._id);
-                          setIsDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="bg-white">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Item</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete &quot;{item.name}
-                          &quot;? This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-label="Edit item"
+                      onClick={() => router.push(`/stock/edit/${item._id}`)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <AlertDialog
+                      open={isDeleteDialogOpen && itemToDelete === item._id}
+                      onOpenChange={(open) => {
+                        setIsDeleteDialogOpen(open);
+                        if (!open) setItemToDelete(null);
+                      }}
+                    >
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          aria-label="Delete item"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={() => {
-                            setIsDeleteDialogOpen(false);
-                            setItemToDelete(null);
+                            setItemToDelete(item._id);
+                            setIsDeleteDialogOpen(true);
                           }}
                         >
-                          Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDelete}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-white">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Item</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete &quot;{item.name}
+                            &quot;? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel
+                            onClick={() => {
+                              setIsDeleteDialogOpen(false);
+                              setItemToDelete(null);
+                            }}
+                          >
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

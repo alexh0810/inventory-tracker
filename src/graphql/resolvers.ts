@@ -66,9 +66,36 @@ export const resolvers = {
     },
     updateItem: async (
       _: unknown,
-      { _id, input }: { _id: string; input: UpdateItemInput }
+      {
+        _id,
+        input,
+        mode,
+      }: { _id: string; input: UpdateItemInput; mode?: 'QUICK' | 'FULL' }
     ): Promise<IItem | null> => {
       await connectDB();
+
+      if (mode === 'QUICK' && input.quantity !== undefined) {
+        // Get current item
+        const currentItem = await Item.findById(_id);
+        if (!currentItem) return null;
+
+        // Calculate new quantity
+        const newQuantity = currentItem.quantity + input.quantity;
+
+        // Prevent negative quantities
+        if (newQuantity < 0) {
+          throw new Error('Cannot reduce quantity below 0');
+        }
+
+        // Update with the new total
+        return await Item.findByIdAndUpdate(
+          _id,
+          { ...input, quantity: newQuantity },
+          { new: true, runValidators: true }
+        );
+      }
+
+      // Full edit mode - direct updates
       return await Item.findByIdAndUpdate(_id, input, {
         new: true,
         runValidators: true,

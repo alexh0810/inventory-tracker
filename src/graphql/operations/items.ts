@@ -14,6 +14,18 @@ export const GET_ITEMS = gql`
   }
 `;
 
+export const GET_ITEM = gql`
+  query GetItem($_id: ID!) {
+    item(_id: $_id) {
+      _id
+      name
+      category
+      quantity
+      minThreshold
+    }
+  }
+`;
+
 export const CREATE_ITEM = gql`
   mutation CreateItem($input: CreateItemInput!) {
     createItem(input: $input) {
@@ -27,13 +39,13 @@ export const CREATE_ITEM = gql`
 `;
 
 export const UPDATE_ITEM = gql`
-  mutation UpdateItem($id: ID!, $input: UpdateItemInput!) {
-    updateItem(id: $id, input: $input) {
+  mutation UpdateItem($_id: ID!, $input: UpdateItemInput!, $mode: String) {
+    updateItem(_id: $_id, input: $input, mode: $mode) {
       _id
       name
+      category
       quantity
       minThreshold
-      category
     }
   }
 `;
