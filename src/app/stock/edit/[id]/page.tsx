@@ -1,60 +1,64 @@
 'use client';
-import { useParams } from 'next/navigation';
-import { useQuery, useMutation } from '@apollo/client';
-import { GET_ITEM, UPDATE_ITEM } from '@/graphql/operations/items';
-import {
-  StockItemForm,
-  ItemFormData,
-} from '@/components/stock/stock-item-form';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
 
-export default function EditItemPage() {
-  const params = useParams() ?? {};
-  const itemId = params.id as string;
+import { use } from 'react';
+import { useQuery, useMutation } from '@apollo/client';
+import {
+  GET_ITEM,
+  UPDATE_ITEM,
+  GET_ITEMS,
+  GET_LOW_STOCK_ITEMS,
+} from '@/graphql/operations/items';
+import { StockItemForm } from '@/components/stock/stock-item-form';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
+
+export default function EditStockPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const router = useRouter();
 
-  const { data, loading: queryLoading } = useQuery(GET_ITEM, {
-    variables: { _id: itemId },
+  const { data, loading } = useQuery(GET_ITEM, {
+    variables: { _id: id },
   });
 
-  const [updateItem, { loading: mutationLoading }] = useMutation(UPDATE_ITEM);
+  const [updateItem, { loading: isUpdating }] = useMutation(UPDATE_ITEM, {
+    refetchQueries: [{ query: GET_ITEMS }, { query: GET_LOW_STOCK_ITEMS }],
+    onCompleted: () => {
+      toast.success('Item updated successfully');
+      router.push('/');
+    },
+  });
 
-  const handleSubmit = async (data: ItemFormData) => {
+  if (loading) return <div>Loading...</div>;
+  if (!data?.item) return <div>Item not found</div>;
+
+  const handleSubmit = async (formData: any) => {
     try {
       await updateItem({
         variables: {
-          _id: itemId,
-          input: data,
+          _id: id,
+          input: formData,
+          mode: 'FULL',
         },
       });
-      toast.success('Item updated successfully');
-      router.push('/');
     } catch (error) {
-      console.error('Error updating item:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to update item'
-      );
+      toast.error('Failed to update item');
+      console.error(error);
     }
   };
 
-  if (queryLoading) return <div>Loading...</div>;
-  if (!data?.item) return <div>Item not found</div>;
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Edit Item: {data.item.name}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <StockItemForm
-          mode="edit"
-          initialData={data.item}
-          onSubmit={handleSubmit}
-          isLoading={mutationLoading}
-        />
-      </CardContent>
-    </Card>
+    <div className="container py-10">
+      <h1 className="text-2xl font-bold mb-6">Edit Stock Item</h1>
+      <StockItemForm
+        mode="edit"
+        initialData={data.item}
+        onSubmit={handleSubmit}
+        isLoading={isUpdating}
+      />
+    </div>
   );
 }

@@ -36,6 +36,13 @@ interface Item {
   minThreshold: number;
 }
 
+const getStockStatus = (quantity: number, minThreshold: number) => {
+  if (quantity <= minThreshold) {
+    return { status: 'LOW', color: 'text-red-600' };
+  }
+  return { status: 'GOOD', color: 'text-green-600' };
+};
+
 export function CurrentStockLevels() {
   const router = useRouter();
   const { data, loading, error } = useQuery(GET_ITEMS);
@@ -113,76 +120,93 @@ export function CurrentStockLevels() {
               <TableHead>Item</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Quantity</TableHead>
+              <TableHead>Stock Level</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.items.map((item: Item) => (
-              <TableRow key={item._id}>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>{item.category.toLowerCase()}</TableCell>
-                <TableCell>{item.quantity}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label="Edit item"
-                      onClick={() => router.push(`/stock/edit/${item._id}`)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog
-                      open={isDeleteDialogOpen && itemToDelete === item._id}
-                      onOpenChange={(open) => {
-                        setIsDeleteDialogOpen(open);
-                        if (!open) setItemToDelete(null);
-                      }}
-                    >
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          aria-label="Delete item"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => {
-                            setItemToDelete(item._id);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-white">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Item</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete &quot;{item.name}
-                            &quot;? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel
+            {data?.items.map((item: Item) => {
+              const { status, color } = getStockStatus(
+                item.quantity,
+                item.minThreshold
+              );
+              return (
+                <TableRow key={item._id}>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>{item.category.toLowerCase()}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className={color}>{item.quantity}</span>
+                      <span className="text-xs text-muted-foreground">
+                        Min: {item.minThreshold}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`font-medium ${color}`}>{status}</span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label="Edit item"
+                        onClick={() => router.push(`/stock/edit/${item._id}`)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog
+                        open={isDeleteDialogOpen && itemToDelete === item._id}
+                        onOpenChange={(open) => {
+                          setIsDeleteDialogOpen(open);
+                          if (!open) setItemToDelete(null);
+                        }}
+                      >
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label="Delete item"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={() => {
-                              setIsDeleteDialogOpen(false);
-                              setItemToDelete(null);
+                              setItemToDelete(item._id);
+                              setIsDeleteDialogOpen(true);
                             }}
                           >
-                            Cancel
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={handleDelete}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-white">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Item</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete &quot;{item.name}
+                              &quot;? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel
+                              onClick={() => {
+                                setIsDeleteDialogOpen(false);
+                                setItemToDelete(null);
+                              }}
+                            >
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDelete}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </CardContent>

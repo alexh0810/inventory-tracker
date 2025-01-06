@@ -31,7 +31,11 @@ export const resolvers = {
     },
     lowStockItems: async (): Promise<IItem[]> => {
       await connectDB();
-      return await Item.findLowStock();
+      return await Item.find({
+        $expr: {
+          $lte: ['$quantity', '$minThreshold'],
+        },
+      });
     },
   },
   Mutation: {
@@ -113,8 +117,6 @@ export const resolvers = {
     stockStatus: (parent: IItem) => {
       if (parent.quantity <= parent.minThreshold) {
         return 'LOW';
-      } else if (parent.quantity <= parent.minThreshold * 1.5) {
-        return 'MEDIUM';
       }
       return 'GOOD';
     },
