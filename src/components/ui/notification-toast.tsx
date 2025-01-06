@@ -43,7 +43,10 @@ export function StockNotifications() {
   if (lowStockCount === 0 || !isOpen) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 w-80 bg-white rounded-lg shadow-lg border border-destructive/20">
+    <div
+      data-testid="stock-notification"
+      className="fixed top-4 right-4 z-50 w-80 bg-white rounded-lg shadow-lg border border-destructive/20"
+    >
       <div className="p-4 bg-destructive/10 rounded-t-lg border-b border-destructive/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-destructive">
@@ -58,6 +61,7 @@ export function StockNotifications() {
             size="sm"
             className="h-8 w-8 p-0 hover:bg-destructive/20"
             onClick={() => setIsOpen(false)}
+            aria-label="close"
           >
             <X className="h-4 w-4 text-destructive" />
           </Button>
@@ -68,6 +72,7 @@ export function StockNotifications() {
           {data?.lowStockItems?.map((item) => (
             <div
               key={item._id}
+              data-testid="stock-item"
               className="p-3 bg-destructive/5 rounded-md border border-destructive/10"
             >
               <p className="font-medium text-destructive">{item.name}</p>
