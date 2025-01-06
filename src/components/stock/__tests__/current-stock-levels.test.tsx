@@ -2,6 +2,8 @@ import { render, screen, fireEvent, waitFor } from '@/test/test-utils';
 import { CurrentStockLevels } from '../current-stock-levels';
 import { GET_ITEMS, DELETE_ITEM } from '@/graphql/operations/items';
 import { convertToCSV } from '@/lib/csv-utils';
+import { TestWrapper } from '@/test-utils/test-wrapper';
+import { mockRouter } from '@/test-utils/setup';
 
 const mocks = [
   {
@@ -53,13 +55,26 @@ const mocks = [
 ];
 
 describe('CurrentStockLevels', () => {
+  beforeEach(() => {
+    // Clear mock router calls before each test
+    jest.clearAllMocks();
+  });
+
   it('renders loading state initially', () => {
-    render(<CurrentStockLevels />);
+    render(
+      <TestWrapper>
+        <CurrentStockLevels />
+      </TestWrapper>
+    );
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
   it('renders items after loading', async () => {
-    render(<CurrentStockLevels />, { mocks });
+    render(
+      <TestWrapper mocks={mocks}>
+        <CurrentStockLevels />
+      </TestWrapper>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Test Item')).toBeInTheDocument();
@@ -69,8 +84,29 @@ describe('CurrentStockLevels', () => {
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 
+  it('handles navigation to edit page', async () => {
+    render(
+      <TestWrapper mocks={mocks}>
+        <CurrentStockLevels />
+      </TestWrapper>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Item')).toBeInTheDocument();
+    });
+
+    const editButton = screen.getByRole('button', { name: /edit item/i });
+    fireEvent.click(editButton);
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/stock/edit/1');
+  });
+
   it('handles delete confirmation flow', async () => {
-    render(<CurrentStockLevels />, { mocks });
+    render(
+      <TestWrapper mocks={mocks}>
+        <CurrentStockLevels />
+      </TestWrapper>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Test Item')).toBeInTheDocument();
@@ -115,7 +151,11 @@ describe('CSV Export', () => {
   it('shows export button and handles click', async () => {
     global.URL.createObjectURL = jest.fn();
 
-    render(<CurrentStockLevels />, { mocks });
+    render(
+      <TestWrapper mocks={mocks}>
+        <CurrentStockLevels />
+      </TestWrapper>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Export CSV')).toBeInTheDocument();

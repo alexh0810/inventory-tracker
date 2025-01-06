@@ -1,28 +1,14 @@
-import React from 'react';
-import { render as rtlRender } from '@testing-library/react';
-import { MockedProvider, MockedResponse } from '@apollo/client/testing';
-import { ThemeProvider } from 'next-themes';
+import { render } from '@testing-library/react';
+import { TestWrapper } from '@/test-utils/test-wrapper';
 
-function render(
-  ui: React.ReactElement,
-  { mocks = [] as MockedResponse[], addTypename = false, ...renderOptions } = {}
-) {
-  function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <MockedProvider mocks={mocks} addTypename={addTypename}>
-        <ThemeProvider
-          enableSystem={false}
-          attribute="class"
-          defaultTheme="light"
-          forcedTheme="light"
-        >
-          {children}
-        </ThemeProvider>
-      </MockedProvider>
-    );
-  }
-  return rtlRender(ui, { wrapper: Wrapper, ...renderOptions });
-}
+const customRender = (ui: React.ReactElement, options = {}) => {
+  return render(ui, {
+    wrapper: ({ children }) => (
+      <TestWrapper mocks={options.mocks}>{children}</TestWrapper>
+    ),
+    ...options,
+  });
+};
 
 export * from '@testing-library/react';
-export { render };
+export { customRender as render };

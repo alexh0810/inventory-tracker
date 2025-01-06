@@ -5,21 +5,16 @@ const createJestConfig = nextJest({
   dir: './',
 });
 
-const config: Config = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-  testEnvironment: 'jest-environment-jsdom',
+const customJestConfig: Config = {
+  setupFilesAfterEnv: ['<rootDir>/src/test-utils/setup.ts'],
+  testEnvironment: 'jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  collectCoverageFrom: [
-    'src/**/*.{js,jsx,ts,tsx}',
-    '!src/**/*.d.ts',
-    '!src/pages/_app.tsx',
-    '!src/pages/_document.tsx',
-  ],
-  testEnvironmentOptions: {
-    customExportConditions: ['node', 'node-addons'],
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
+  globals: {
+    'process.env.SUPPRESS_JEST_WARNINGS': true,
   },
 };
 
-export default createJestConfig(config);
+export default createJestConfig(customJestConfig);
