@@ -2,7 +2,11 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
-import { GET_ITEMS, UPDATE_ITEM } from '@/graphql/operations/items';
+import {
+  GET_ITEMS,
+  GET_LOW_STOCK_ITEMS,
+  UPDATE_ITEM,
+} from '@/graphql/operations/items';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +28,7 @@ export function QuickStockUpdate() {
   const { data } = useQuery(GET_ITEMS);
 
   const [updateQuantity, { loading: updating }] = useMutation(UPDATE_ITEM, {
-    refetchQueries: [{ query: GET_ITEMS }],
+    refetchQueries: [{ query: GET_ITEMS }, { query: GET_LOW_STOCK_ITEMS }],
   });
 
   const handleUpdate = async (operation: 'add' | 'remove') => {

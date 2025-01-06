@@ -57,3 +57,14 @@ export const DELETE_ITEM = gql`
     }
   }
 `;
+
+export const GET_LOW_STOCK_ITEMS = gql`
+  query GetLowStockItems {
+    lowStockItems {
+      _id
+      name
+      quantity
+      minThreshold
+    }
+  }
+`;
