@@ -6,10 +6,14 @@ interface MongooseCache {
 }
 
 if (!process.env.MONGODB_URI) {
-  throw new Error('Please add your MongoDB URI to .env.local');
+  if (process.env.NODE_ENV === 'test') {
+    console.log('Waiting for MongoDB Memory Server to initialize...');
+  } else {
+    throw new Error('Please add your MongoDB URI to .env.local');
+  }
 }
 
-const MONGODB_URI: string = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI as string;
 
 let cached = (global as { mongoose?: MongooseCache }).mongoose || {
   conn: null,

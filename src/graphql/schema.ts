@@ -10,7 +10,6 @@ export const typeDefs = gql`
 
   enum StockStatus {
     LOW
-    MEDIUM
     GOOD
   }
 
@@ -47,7 +46,7 @@ export const typeDefs = gql`
 
   type Mutation {
     createItem(input: CreateItemInput!): Item!
-    updateItem(_id: ID!, input: UpdateItemInput!): Item!
+    updateItem(_id: ID!, input: UpdateItemInput!, mode: String): Item!
     deleteItem(_id: ID!): Item!
   }
 `;
