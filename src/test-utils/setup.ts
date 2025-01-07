@@ -1,5 +1,4 @@
 import '@testing-library/jest-dom';
-<<<<<<< HEAD
 import { TextEncoder, TextDecoder } from 'node:util';
 
 // Add TextEncoder polyfill
@@ -42,18 +41,3 @@ export { mockRouter };
 
 // Suppress mongoose warnings
 process.env.SUPPRESS_JEST_WARNINGS = 'true';
-=======
-
-jest.mock('next/navigation', () => ({
-  useRouter() {
-    return {
-      push: jest.fn(),
-      replace: jest.fn(),
-      prefetch: jest.fn(),
-    };
-  },
-  usePathname() {
-    return '';
-  },
-}));
->>>>>>> feature/stock-alert

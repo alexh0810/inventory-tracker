@@ -54,7 +54,7 @@ export function QuickStockUpdate() {
       });
 
       if (response.data) {
-        toast.success(`Successfully ${operation}d stock`);
+        toast.success(`Successfully ${operation}ed stock`);
         setQuantity(0);
         setSelectedItem('');
       }
