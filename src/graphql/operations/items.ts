@@ -14,6 +14,18 @@ export const GET_ITEMS = gql`
   }
 `;
 
+export const GET_ITEM = gql`
+  query GetItem($_id: ID!) {
+    item(_id: $_id) {
+      _id
+      name
+      category
+      quantity
+      minThreshold
+    }
+  }
+`;
+
 export const CREATE_ITEM = gql`
   mutation CreateItem($input: CreateItemInput!) {
     createItem(input: $input) {
@@ -26,4 +38,33 @@ export const CREATE_ITEM = gql`
   }
 `;
 
-// Add other operations (UPDATE_ITEM, DELETE_ITEM, etc.)
+export const UPDATE_ITEM = gql`
+  mutation UpdateItem($_id: ID!, $input: UpdateItemInput!, $mode: String) {
+    updateItem(_id: $_id, input: $input, mode: $mode) {
+      _id
+      name
+      category
+      quantity
+      minThreshold
+    }
+  }
+`;
+
+export const DELETE_ITEM = gql`
+  mutation DeleteItem($_id: ID!) {
+    deleteItem(_id: $_id) {
+      _id
+    }
+  }
+`;
+
+export const GET_LOW_STOCK_ITEMS = gql`
+  query GetLowStockItems {
+    lowStockItems {
+      _id
+      name
+      quantity
+      minThreshold
+    }
+  }
+`;
