@@ -12,6 +12,13 @@ import { StockItemForm } from '@/components/stock/stock-item-form';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
+interface FormData {
+  name: string;
+  quantity: number;
+  minThreshold: number;
+  category: 'FOOD' | 'BEVERAGE' | 'SUPPLIES' | 'OTHER';
+}
+
 export default function EditStockPage({
   params,
 }: {
@@ -35,7 +42,7 @@ export default function EditStockPage({
   if (loading) return <div>Loading...</div>;
   if (!data?.item) return <div>Item not found</div>;
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: FormData) => {
     try {
       await updateItem({
         variables: {

@@ -21,7 +21,7 @@ import {
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  category: z.string().min(1, 'Category is required'),
+  category: z.enum(['FOOD', 'BEVERAGE', 'SUPPLIES', 'OTHER']),
   quantity: z.number().min(0, 'Quantity must be 0 or greater'),
   minThreshold: z.number().min(0, 'Minimum threshold must be 0 or greater'),
 });
@@ -45,7 +45,7 @@ export function StockItemForm({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
       name: '',
-      category: '',
+      category: 'FOOD',
       quantity: 0,
       minThreshold: 0,
     },

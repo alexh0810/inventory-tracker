@@ -75,9 +75,9 @@ describe('GraphQL Resolvers', () => {
         input: mockItem,
       });
 
-      // Compare only the data properties, excluding the save method
-      const { save, ...resultWithoutSave } = result;
-      expect(resultWithoutSave).toEqual(mockCreatedItem);
+      // Compare only the data properties
+      const resultData = { ...result };
+      expect(resultData).toEqual(mockCreatedItem);
       expect(result._id).toBe('1');
       expect(result.name).toBe(mockItem.name);
     });

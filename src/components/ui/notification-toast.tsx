@@ -7,6 +7,13 @@ import { Bell, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '../ui/badge';
 
+type Item = {
+  _id: string;
+  name: string;
+  quantity: number;
+  minThreshold: number;
+};
+
 export function StockNotifications() {
   const { data, startPolling, stopPolling } = useQuery(GET_LOW_STOCK_ITEMS, {
     fetchPolicy: 'cache-and-network',
@@ -19,7 +26,7 @@ export function StockNotifications() {
   useEffect(() => {
     if (data?.lowStockItems) {
       const newHash = JSON.stringify(
-        data.lowStockItems.map((item) => ({
+        data.lowStockItems.map((item: Item) => ({
           id: item._id,
           quantity: item.quantity,
           minThreshold: item.minThreshold,
@@ -69,7 +76,7 @@ export function StockNotifications() {
       </div>
       <div className="p-4 max-h-[60vh] overflow-y-auto">
         <div className="space-y-3">
-          {data?.lowStockItems?.map((item) => (
+          {data?.lowStockItems?.map((item: Item) => (
             <div
               key={item._id}
               data-testid="stock-item"

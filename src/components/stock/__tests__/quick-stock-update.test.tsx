@@ -1,7 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import { QuickStockUpdate } from '../quick-stock-update';
-import { GET_ITEMS, UPDATE_ITEM } from '@/graphql/operations/items';
+import {
+  GET_ITEMS,
+  UPDATE_ITEM,
+  GET_LOW_STOCK_ITEMS,
+} from '@/graphql/operations/items';
 import { toast } from 'react-hot-toast';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -18,12 +22,18 @@ const mockItems = [
     name: 'Coffee',
     quantity: 10,
     minThreshold: 5,
+    category: 'BEVERAGE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     _id: '2',
     name: 'Tea',
     quantity: 15,
     minThreshold: 8,
+    category: 'BEVERAGE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
 ];
 
@@ -69,6 +79,7 @@ jest.mock('@/components/ui/select', () => ({
   }) => (
     <div
       role="option"
+      aria-selected={false}
       data-testid="select-item"
       data-value={value}
       onClick={() => {
@@ -102,6 +113,18 @@ const mocks = [
   },
   {
     request: {
+      query: GET_LOW_STOCK_ITEMS,
+    },
+    result: {
+      data: {
+        lowStockItems: mockItems.filter(
+          (item) => item.quantity <= item.minThreshold
+        ),
+      },
+    },
+  },
+  {
+    request: {
       query: UPDATE_ITEM,
       variables: {
         _id: '1',
@@ -116,6 +139,9 @@ const mocks = [
           name: 'Coffee',
           quantity: 15,
           minThreshold: 5,
+          category: 'BEVERAGE',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         },
       },
     },
@@ -270,19 +296,49 @@ describe('QuickStockUpdate', () => {
     });
   });
 
-  it('debug select rendering', async () => {
+  it('handles error during update', async () => {
+    const errorMock = {
+      request: {
+        query: UPDATE_ITEM,
+        variables: {
+          _id: '1',
+          input: { quantity: 5 },
+          mode: 'QUICK',
+        },
+      },
+      error: new Error('Failed to update stock'),
+    };
+
+    const user = userEvent.setup();
+
     render(
-      <MockedProvider mocks={mocks} addTypename={false}>
+      <MockedProvider mocks={[errorMock]} addTypename={false}>
         <QuickStockUpdate />
       </MockedProvider>
     );
 
-    // Debug what's actually being rendered
-    screen.debug();
+    // Wait for data to load
+    await waitFor(() => {
+      expect(screen.getByTestId('select-trigger')).toBeInTheDocument();
+    });
+
+    // Select item and enter quantity
+    const trigger = screen.getByTestId('select-trigger');
+    await user.click(trigger);
+    const targetItem = screen.getByRole('option', {
+      name: 'Coffee (Current: 10)',
+    });
+    await user.click(targetItem);
+
+    const quantityInput = screen.getByPlaceholderText('Quantity');
+    await user.type(quantityInput, '5');
+
+    // Try to add stock
+    const addButton = screen.getByRole('button', { name: 'Add' });
+    await user.click(addButton);
 
     await waitFor(() => {
-      // Check if the GraphQL query completed
-      expect(screen.getByTestId('select-root')).toBeInTheDocument();
+      expect(toast.error).toHaveBeenCalledWith('Failed to update stock');
     });
   });
 });
