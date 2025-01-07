@@ -28,47 +28,66 @@ const mockItems = [
 ];
 
 // Mock the select components
-jest.mock('@/components/ui/select', () => {
-  let currentOnValueChange: ((value: string) => void) | null = null;
+jest.mock('@/components/ui/select', () => ({
+  Select: ({
+    children,
+    onValueChange,
+  }: {
+    children: React.ReactNode;
+    onValueChange?: (value: string) => void;
+  }) => {
+    React.useEffect(() => {
+      const root = document.querySelector('[data-testid="select-root"]');
+      const handler = (e: Event) => {
+        const customEvent = e as CustomEvent<string>;
+        onValueChange?.(customEvent.detail);
+      };
+      root?.addEventListener('select-value-change', handler as EventListener);
+      return () =>
+        root?.removeEventListener(
+          'select-value-change',
+          handler as EventListener
+        );
+    }, [onValueChange]);
 
-  return {
-    Select: ({
-      children,
-      onValueChange,
-    }: {
-      children: React.ReactNode;
-      onValueChange: (value: string) => void;
-    }) => {
-      currentOnValueChange = onValueChange;
-      return <div data-testid="select-root">{children}</div>;
-    },
-    SelectTrigger: ({ children }: { children: React.ReactNode }) => (
-      <button data-testid="select-trigger">{children}</button>
-    ),
-    SelectContent: ({ children }: { children: React.ReactNode }) => (
-      <div data-testid="select-content">{children}</div>
-    ),
-    SelectItem: ({
-      value,
-      children,
-    }: {
-      value: string;
-      children: React.ReactNode;
-    }) => (
-      <div
-        data-testid="select-item"
-        data-value={value}
-        onClick={() => currentOnValueChange?.(value)}
-        role="option"
-      >
-        {children}
-      </div>
-    ),
-    SelectValue: ({ placeholder }: { placeholder: string }) => (
-      <span data-testid="select-value">{placeholder}</span>
-    ),
-  };
-});
+    return <div data-testid="select-root">{children}</div>;
+  },
+  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
+    <button type="button" data-testid="select-trigger">
+      {children}
+    </button>
+  ),
+  SelectContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="select-content">{children}</div>
+  ),
+  SelectItem: ({
+    value,
+    children,
+  }: {
+    value: string;
+    children: React.ReactNode;
+  }) => (
+    <div
+      role="option"
+      data-testid="select-item"
+      data-value={value}
+      onClick={() => {
+        const event = new CustomEvent<string>('select-value-change', {
+          detail: value,
+          bubbles: true,
+        });
+        document
+          .querySelector('[data-testid="select-root"]')
+          ?.dispatchEvent(event);
+      }}
+    >
+      {children}
+    </div>
+  ),
+  SelectValue: ({ placeholder }: { placeholder: string }) => (
+    <span data-testid="select-value">{placeholder}</span>
+  ),
+}));
 
 const mocks = [
   {
@@ -120,8 +139,8 @@ describe('QuickStockUpdate', () => {
     });
 
     expect(screen.getByPlaceholderText('Quantity')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /remove/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
   });
 
   it('validates form inputs', async () => {
@@ -141,7 +160,7 @@ describe('QuickStockUpdate', () => {
     const quantityInput = screen.getByPlaceholderText('Quantity');
     await user.type(quantityInput, '5');
 
-    const addButton = screen.getByRole('button', { name: /add/i });
+    const addButton = screen.getByRole('button', { name: 'Add' });
     await user.click(addButton);
 
     await waitFor(() => {
@@ -151,14 +170,16 @@ describe('QuickStockUpdate', () => {
     // Now select an item
     const trigger = screen.getByTestId('select-trigger');
     await user.click(trigger);
-    const targetItem = screen.getByRole('option', { name: /Coffee/ });
+    const targetItem = screen.getByRole('option', {
+      name: 'Coffee (Current: 10)',
+    });
     await user.click(targetItem);
 
     // Clear quantity and verify buttons are disabled
     await user.clear(quantityInput);
 
-    expect(screen.getByRole('button', { name: /add/i })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /remove/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeDisabled();
   });
 
   it('handles successful stock addition', async () => {
@@ -180,10 +201,9 @@ describe('QuickStockUpdate', () => {
     await user.click(trigger);
 
     // Find and click the desired option
-    const targetItem = screen.getByRole('option', { name: /Coffee/ });
-    if (!targetItem) {
-      throw new Error('Select item not found');
-    }
+    const targetItem = screen.getByRole('option', {
+      name: 'Coffee (Current: 10)',
+    });
     await user.click(targetItem);
 
     // Enter quantity
@@ -191,7 +211,7 @@ describe('QuickStockUpdate', () => {
     await user.type(quantityInput, '5');
 
     // Add stock
-    const addButton = screen.getByRole('button', { name: /add/i });
+    const addButton = screen.getByRole('button', { name: 'Add' });
     await user.click(addButton);
 
     await waitFor(() => {
@@ -230,10 +250,9 @@ describe('QuickStockUpdate', () => {
     await user.click(trigger);
 
     // Find and click the desired option
-    const targetItem = screen.getByRole('option', { name: /Coffee/ });
-    if (!targetItem) {
-      throw new Error('Select item not found');
-    }
+    const targetItem = screen.getByRole('option', {
+      name: 'Coffee (Current: 10)',
+    });
     await user.click(targetItem);
 
     // Enter quantity
@@ -241,7 +260,7 @@ describe('QuickStockUpdate', () => {
     await user.type(quantityInput, '20');
 
     // Click remove button
-    const removeButton = screen.getByRole('button', { name: /remove/i });
+    const removeButton = screen.getByRole('button', { name: 'Remove' });
     await user.click(removeButton);
 
     await waitFor(() => {

@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import { CurrentStockLevels } from '../current-stock-levels';
 import { GET_ITEMS, DELETE_ITEM } from '@/graphql/operations/items';
-import { mockRouter } from '@/test-utils/setup';
+import { mockRouter, resetRouterMocks } from '@/test-utils/router-mock';
 import { toast } from 'react-hot-toast';
 
 // Mock toast
@@ -58,6 +58,11 @@ const mocks = [
 describe('CurrentStockLevels', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetRouterMocks();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
   });
 
   it('renders loading state initially', () => {
