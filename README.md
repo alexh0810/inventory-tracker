@@ -1,40 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Food & Drinks Stock Tracker
 
-## Getting Started
+A modern stock management system built with Next.js, GraphQL, and MongoDB.
 
-First, run the development server:
+## Prerequisites
+
+- Node.js 16+
+- MongoDB Database (Atlas or self-hosted)
+- Vercel account (for deployment)
+
+## Environment Setup
+
+1. Clone the repository
+
+```bash
+git clone [your-repo-url]
+cd food-drinks-stock-tracker
+```
+
+2. Install dependencies
+
+```bash
+npm install
+```
+
+3. Set up environment variables:
+   - Copy `.env.example` to `.env.local`
+   - Update `MONGODB_URI` with your MongoDB connection string
+
+```bash
+cp .env.example .env.local
+```
+
+## MongoDB Setup
+
+1. Create a MongoDB Atlas account at [https://www.mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
+2. Create a new cluster (free tier is sufficient)
+3. Click "Connect" and choose "Connect your application"
+4. Copy the connection string and replace the placeholder in `.env.local`
+5. Replace `<password>` with your database user password
+6. Replace `<dbname>` with your desired database name
+
+## Development
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## Deployment to Vercel
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+1. Push your code to GitHub
+2. Visit [Vercel](https://vercel.com) and sign in with GitHub
+3. Click "New Project" and import your repository
+4. Configure environment variables:
+   - Add `MONGODB_URI` with your production MongoDB connection string
+5. Click "Deploy"
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+### Important Deployment Notes
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Ensure your MongoDB Atlas cluster allows connections from Vercel's IP addresses
+- In MongoDB Atlas:
+  1. Go to Network Access
+  2. Click "Add IP Address"
+  3. Click "Allow Access from Anywhere" (or add Vercel's IP range)
+  4. Confirm changes
 
-## Learn More
+## Features
 
-To learn more about Next.js, take a look at the following resources:
+- 📦 Real-time stock tracking
+- 🔔 Low stock notifications
+- 📊 Stock analytics
+- 🌓 Dark/Light mode
+- 📱 Responsive design
+- 🔄 Quick stock updates
+- 📈 Stock history
+- 📋 CSV export
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+## Testing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Run the test suite:
 
-## Deploy on Vercel
+```bash
+npm test
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contributing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
