@@ -8,9 +8,10 @@ A modern stock management system built with Next.js, GraphQL, and MongoDB.
 
 ## Prerequisites
 
-- Node.js 16+
+- Node.js 16+ (for local development)
 - MongoDB Database (Atlas or self-hosted)
 - Vercel account (for deployment)
+- Docker and Docker Compose (for containerized setup)
 
 ## Environment Setup
 
@@ -21,7 +22,7 @@ git clone [your-repo-url]
 cd food-drinks-stock-tracker
 ```
 
-2. Install dependencies
+2. Install dependencies (for local development)
 
 ```bash
 npm install
@@ -34,6 +35,51 @@ npm install
 ```bash
 cp .env.example .env.local
 ```
+
+## Docker Setup
+
+1. Build and run with Docker Compose:
+
+```bash
+# Build and start the containers
+docker-compose up --build
+
+# Run in detached mode
+docker-compose up -d
+
+# Stop the containers
+docker-compose down
+```
+
+2. Access the application:
+   - Frontend: http://localhost:3000
+   - API: http://localhost:3000/api/graphql
+
+### Docker Commands
+
+```bash
+# View logs
+docker-compose logs -f
+
+# Rebuild containers
+docker-compose up --build
+
+# Remove containers and volumes
+docker-compose down -v
+
+# Check container status
+docker-compose ps
+```
+
+### Docker Development
+
+The Docker setup includes:
+
+- Next.js application container
+- Production-ready Nginx configuration
+- Automatic reload for development
+- Optimized production builds
+- Environment variable management
 
 ## MongoDB Setup
 
