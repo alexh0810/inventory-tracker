@@ -10,9 +10,6 @@
   "env": {
     "MONGODB_URI": "@mongodb_uri"
   },
-  "healthCheck": {
-    "path": "/api/health"
-  },
   "headers": [
     {
       "source": "/(.*)",
