@@ -7,9 +7,6 @@
     }
   ],
   "regions": ["iad1"],
-  "env": {
-    "MONGODB_URI": "@mongodb_uri"
-  },
   "headers": [
     {
       "source": "/(.*)",
