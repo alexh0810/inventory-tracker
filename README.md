@@ -2,6 +2,10 @@
 
 A modern stock management system built with Next.js, GraphQL, and MongoDB.
 
+## Live Demo
+
+🚀 Check out the live application: [Stock Tracker](https://inventory-tracker-coral.vercel.app/)
+
 ## Prerequisites
 
 - Node.js 16+
