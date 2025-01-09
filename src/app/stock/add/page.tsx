@@ -20,7 +20,7 @@ export default function AddItemPage() {
         variables: { input: data },
       });
       toast.success('Item added successfully');
-      router.push('/stock');
+      router.push('/');
     } catch (error) {
       console.error('Error adding item:', error);
       toast.error(
