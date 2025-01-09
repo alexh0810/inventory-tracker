@@ -72,30 +72,33 @@ export function StockAnalyticsDashboard() {
   // Process data for trends
   const stockTrends = Object.entries(
     stockHistory.reduce(
-      (acc: { [key: string]: { [date: string]: StockHistory } }, curr) => {
+      (acc: { [key: string]: { [key: string]: StockHistory } }, curr) => {
         if (!acc[curr.itemName]) {
           acc[curr.itemName] = {};
         }
-        const date = new Date(curr.timestamp).toISOString().split('T')[0];
-        // Keep only the latest entry for each date
+        // Use hourly timestamp instead of daily
+        const timestamp = new Date(curr.timestamp);
+        const hourKey = timestamp.toISOString().slice(0, 13); // Format: YYYY-MM-DDTHH
+
+        // Keep only the latest entry for each hour
         if (
-          !acc[curr.itemName][date] ||
+          !acc[curr.itemName][hourKey] ||
           new Date(curr.timestamp) >
-            new Date(acc[curr.itemName][date].timestamp)
+            new Date(acc[curr.itemName][hourKey].timestamp)
         ) {
-          acc[curr.itemName][date] = curr;
+          acc[curr.itemName][hourKey] = curr;
         }
         return acc;
       },
       {}
     )
-  ).reduce((acc: { [key: string]: StockTrend[] }, [itemName, dateEntries]) => {
-    // Convert to array and sort by date
-    acc[itemName] = Object.entries(dateEntries)
-      .map(([date, entry]) => ({
+  ).reduce((acc: { [key: string]: StockTrend[] }, [itemName, hourEntries]) => {
+    // Convert to array and sort by timestamp
+    acc[itemName] = Object.entries(hourEntries)
+      .map(([, entry]) => ({
         name: itemName,
         quantity: entry.quantity,
-        date,
+        date: new Date(entry.timestamp).toLocaleTimeString(),
         timestamp: new Date(entry.timestamp),
       }))
       .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
@@ -122,40 +125,47 @@ export function StockAnalyticsDashboard() {
 
   // Calculate predictions
   const predictions = Object.entries(stockTrends).map(([itemName, trends]) => {
-    const recentTrend = trends.slice(-7); // Get last 7 days
+    // Use last 24 hours of data instead of 7 days
+    const last24Hours = trends.filter(
+      (trend) =>
+        new Date(trend.timestamp).getTime() > Date.now() - 24 * 60 * 60 * 1000
+    );
     const currentStock = currentStockMap[itemName] || 0;
 
-    if (recentTrend.length < 2) {
+    if (last24Hours.length < 2) {
       return {
         itemName,
-        avgDailyUsage: 0,
-        daysUntilRestock: null,
+        avgHourlyUsage: 0,
+        hoursUntilRestock: null,
         currentStock,
       };
     }
 
     let totalUsage = 0;
-    let daysCounted = 0;
+    let hoursTracked = 0;
 
-    for (let i = 0; i < recentTrend.length - 1; i++) {
-      const curr = recentTrend[i];
-      const next = recentTrend[i + 1];
+    for (let i = 0; i < last24Hours.length - 1; i++) {
+      const curr = last24Hours[i];
+      const next = last24Hours[i + 1];
       const usage = curr.quantity - next.quantity;
+      const hoursBetween =
+        (next.timestamp.getTime() - curr.timestamp.getTime()) /
+        (1000 * 60 * 60);
+
       if (usage > 0) {
-        // Only count decreases in stock as usage
         totalUsage += usage;
-        daysCounted++;
+        hoursTracked += hoursBetween;
       }
     }
 
-    const avgDailyUsage = daysCounted > 0 ? totalUsage / daysCounted : 0;
-    const daysUntilRestock =
-      avgDailyUsage > 0 ? Math.floor(currentStock / avgDailyUsage) : null;
+    const avgHourlyUsage = hoursTracked > 0 ? totalUsage / hoursTracked : 0;
+    const hoursUntilRestock =
+      avgHourlyUsage > 0 ? Math.floor(currentStock / avgHourlyUsage) : null;
 
     return {
       itemName,
-      avgDailyUsage,
-      daysUntilRestock,
+      avgHourlyUsage,
+      hoursUntilRestock,
       currentStock,
     };
   });
@@ -167,7 +177,7 @@ export function StockAnalyticsDashboard() {
       {/* Usage Trends */}
       <Card>
         <CardHeader>
-          <CardTitle>Stock Usage Trends</CardTitle>
+          <CardTitle>Stock Usage Trends (Last 24 Hours)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[400px]">
@@ -178,6 +188,10 @@ export function StockAnalyticsDashboard() {
                   dataKey="date"
                   type="category"
                   allowDuplicatedCategory={false}
+                  interval="preserveStartEnd"
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
                 />
                 <YAxis />
                 <Tooltip />
@@ -186,7 +200,10 @@ export function StockAnalyticsDashboard() {
                   <Line
                     key={itemName}
                     type="monotone"
-                    data={data}
+                    data={data.filter(
+                      (d) =>
+                        d.timestamp.getTime() > Date.now() - 24 * 60 * 60 * 1000
+                    )}
                     dataKey="quantity"
                     name={itemName}
                     stroke={itemColors[itemName]}
@@ -217,10 +234,10 @@ export function StockAnalyticsDashboard() {
                   <dl className="space-y-2">
                     <div>
                       <dt className="text-sm text-muted-foreground">
-                        Average Daily Usage
+                        Average Hourly Usage
                       </dt>
                       <dd className="text-2xl font-bold">
-                        {prediction.avgDailyUsage.toFixed(2)} units
+                        {prediction.avgHourlyUsage.toFixed(2)} units/hour
                       </dd>
                     </div>
                     <div>
@@ -233,11 +250,11 @@ export function StockAnalyticsDashboard() {
                     </div>
                     <div>
                       <dt className="text-sm text-muted-foreground">
-                        Days Until Restock Needed
+                        Hours Until Restock Needed
                       </dt>
                       <dd className="text-2xl font-bold">
-                        {prediction.daysUntilRestock !== null
-                          ? `${prediction.daysUntilRestock} days`
+                        {prediction.hoursUntilRestock !== null
+                          ? `${prediction.hoursUntilRestock} hours`
                           : 'N/A'}
                       </dd>
                     </div>
