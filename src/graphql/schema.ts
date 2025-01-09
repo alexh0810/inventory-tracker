@@ -17,11 +17,11 @@ export const typeDefs = gql`
     _id: ID!
     name: String!
     quantity: Int!
-    minThreshold: Int!
-    category: Category!
-    stockStatus: StockStatus!
-    createdAt: String!
-    updatedAt: String!
+    minThreshold: Int
+    category: Category
+    stockStatus: StockStatus
+    createdAt: String
+    updatedAt: String
   }
 
   input CreateItemInput {
@@ -38,15 +38,24 @@ export const typeDefs = gql`
     category: Category
   }
 
+  type StockHistory {
+    _id: ID!
+    itemId: ID!
+    itemName: String!
+    quantity: Int!
+    timestamp: String!
+  }
+
   type Query {
     items: [Item!]!
     item(_id: ID!): Item
     lowStockItems: [Item!]!
+    stockHistory: [StockHistory!]!
   }
 
   type Mutation {
     createItem(input: CreateItemInput!): Item!
     updateItem(_id: ID!, input: UpdateItemInput!, mode: String): Item!
-    deleteItem(_id: ID!): Item!
+    deleteItem(_id: ID!): Item
   }
 `;
