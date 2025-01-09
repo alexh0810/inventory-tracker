@@ -1,72 +1,47 @@
-import Item from '@/models/item';
-import { IItem } from '@/models/item';
+import Item, { IItem } from '@/models/item';
+import { StockHistory } from '@/models/stock-history';
 import connectDB from '@/lib/db';
 
 interface CreateItemInput {
   name: string;
   quantity: number;
-  minThreshold: number;
-  category: 'FOOD' | 'BEVERAGE' | 'SUPPLIES' | 'OTHER';
+  category: string;
 }
 
-interface UpdateItemInput {
-  name?: string;
-  quantity?: number;
-  minThreshold?: number;
-  category?: 'FOOD' | 'BEVERAGE' | 'SUPPLIES' | 'OTHER';
-}
-
-export const resolvers = {
+const resolvers = {
   Query: {
-    items: async (): Promise<IItem[]> => {
+    items: async () => {
       await connectDB();
-      return await Item.find({});
+      return await Item.find();
     },
-    item: async (
-      _: unknown,
-      { _id }: { _id: string }
-    ): Promise<IItem | null> => {
+    item: async (_: unknown, { _id }: { _id: string }) => {
       await connectDB();
       return await Item.findById(_id);
     },
-    lowStockItems: async (): Promise<IItem[]> => {
+    lowStockItems: async () => {
       await connectDB();
-      return await Item.find({
-        $expr: {
-          $lte: ['$quantity', '$minThreshold'],
-        },
-      });
+      return await Item.find({ quantity: { $lt: 10 } });
+    },
+    stockHistory: async () => {
+      await connectDB();
+      try {
+        const history = await StockHistory.find().sort({ timestamp: -1 });
+        return history;
+      } catch (error) {
+        console.error('Error fetching stock history:', error);
+        throw new Error('Failed to fetch stock history');
+      }
     },
   },
   Mutation: {
-    createItem: async (
-      _: unknown,
-      { input }: { input: CreateItemInput }
-    ): Promise<IItem> => {
+    createItem: async (_: unknown, { input }: { input: CreateItemInput }) => {
       await connectDB();
-
-      // Convert name to lowercase for case-insensitive comparison
-      const normalizedName = input.name.toLowerCase();
-
-      // Try to find an existing item with the same name (case-insensitive)
-      const existingItem = await Item.findOne({
-        name: { $regex: new RegExp(`^${normalizedName}$`, 'i') },
-      });
-
-      if (existingItem) {
-        // If item exists, update the quantity and other fields if provided
-        existingItem.quantity += input.quantity;
-        if (input.minThreshold) existingItem.minThreshold = input.minThreshold;
-        if (input.category) existingItem.category = input.category;
-
-        await existingItem.save();
-        return existingItem;
-      }
-
-      // If item doesn't exist, create a new one
       const item = new Item(input);
-      await item.save();
-      return item;
+      return await item.save();
+    },
+    deleteItem: async (_: unknown, { _id }: { _id: string }) => {
+      await connectDB();
+      return await Item.findByIdAndDelete(_id);
     },
     updateItem: async (
       _: unknown,
@@ -74,51 +49,59 @@ export const resolvers = {
         _id,
         input,
         mode,
-      }: { _id: string; input: UpdateItemInput; mode?: 'QUICK' | 'FULL' }
-    ): Promise<IItem | null> => {
+      }: { _id: string; input: { quantity: number }; mode?: string }
+    ) => {
       await connectDB();
-
-      if (mode === 'QUICK' && input.quantity !== undefined) {
-        // Get current item
-        const currentItem = await Item.findById(_id);
-        if (!currentItem) return null;
-
-        // Calculate new quantity
-        const newQuantity = currentItem.quantity + input.quantity;
-
-        // Prevent negative quantities
-        if (newQuantity < 0) {
-          throw new Error('Cannot reduce quantity below 0');
+      try {
+        const item = await Item.findById(_id);
+        if (!item) {
+          throw new Error('Item not found');
         }
 
-        // Update with the new total
-        return await Item.findByIdAndUpdate(
-          _id,
-          { ...input, quantity: newQuantity },
-          { new: true, runValidators: true }
-        );
-      }
+        if (mode === 'QUICK') {
+          // Calculate new quantity
+          const newQuantity = item.quantity + input.quantity;
 
-      // Full edit mode - direct updates
-      return await Item.findByIdAndUpdate(_id, input, {
-        new: true,
-        runValidators: true,
-      });
-    },
-    deleteItem: async (
-      _: unknown,
-      { _id }: { _id: string }
-    ): Promise<IItem | null> => {
-      await connectDB();
-      return await Item.findByIdAndDelete(_id);
+          // Prevent negative quantities
+          if (newQuantity < 0) {
+            throw new Error('Cannot reduce quantity below 0');
+          }
+
+          // Create stock history entry
+          await StockHistory.create({
+            itemId: item._id,
+            itemName: item.name,
+            quantity: newQuantity,
+            timestamp: new Date(),
+          });
+
+          // Update item quantity
+          item.quantity = newQuantity;
+          await item.save();
+          return item;
+        }
+
+        // Full edit mode - direct updates
+        return await Item.findByIdAndUpdate(_id, input, {
+          new: true,
+          runValidators: true,
+        });
+      } catch (error) {
+        console.error('Error updating item:', error);
+        throw new Error('Failed to update item');
+      }
     },
   },
   Item: {
-    stockStatus: (parent: IItem) => {
-      if (parent.quantity <= parent.minThreshold) {
-        return 'LOW';
-      }
-      return 'GOOD';
+    category: async (parent: IItem) => {
+      return parent.category;
+    },
+  },
+  StockHistory: {
+    timestamp: (parent: { timestamp: Date }) => {
+      return parent.timestamp.toISOString();
     },
   },
 };
+
+export default resolvers;
