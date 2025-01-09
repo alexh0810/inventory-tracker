@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation } from '@apollo/client';
-import { CREATE_ITEM } from '@/graphql/operations/items';
+import { CREATE_ITEM, GET_ITEMS } from '@/graphql/operations/items';
 import {
   StockItemForm,
   ItemFormData,
@@ -12,7 +12,9 @@ import { useRouter } from 'next/navigation';
 
 export default function AddItemPage() {
   const router = useRouter();
-  const [addItem, { loading }] = useMutation(CREATE_ITEM);
+  const [addItem, { loading }] = useMutation(CREATE_ITEM, {
+    refetchQueries: [{ query: GET_ITEMS }],
+  });
 
   const handleSubmit = async (data: ItemFormData) => {
     try {
