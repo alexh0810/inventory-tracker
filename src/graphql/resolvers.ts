@@ -20,7 +20,18 @@ const resolvers = {
     },
     lowStockItems: async () => {
       await connectDB();
-      return await Item.find({ quantity: { $lt: 10 } });
+      try {
+        const items = await Item.find({
+          $expr: {
+            $lte: ['$quantity', '$minThreshold'],
+          },
+        });
+
+        return items;
+      } catch (error) {
+        console.error('Error fetching low stock items:', error);
+        throw new Error('Failed to fetch low stock items');
+      }
     },
     stockHistory: async () => {
       await connectDB();

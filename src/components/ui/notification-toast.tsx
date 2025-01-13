@@ -15,15 +15,13 @@ type Item = {
 };
 
 export function StockNotifications() {
-  const { data, startPolling, stopPolling } = useQuery(GET_LOW_STOCK_ITEMS, {
-    fetchPolicy: 'cache-and-network',
-  });
+  const { data, startPolling, stopPolling } = useQuery(GET_LOW_STOCK_ITEMS);
 
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [lastDataHash, setLastDataHash] = useState('');
 
-  // Show notification when low stock data changes
   useEffect(() => {
+    console.log('Low stock data:', data?.lowStockItems);
     if (data?.lowStockItems) {
       const newHash = JSON.stringify(
         data.lowStockItems.map((item: Item) => ({

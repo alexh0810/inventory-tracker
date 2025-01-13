@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client';
-import { GET_ITEMS } from '@/graphql/operations/items';
+import { GET_LOW_STOCK_ITEMS } from '@/graphql/operations/items';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Item {
@@ -10,11 +10,9 @@ interface Item {
 }
 
 export function LowStockAlerts() {
-  const { data, loading } = useQuery(GET_ITEMS);
+  const { data, loading } = useQuery(GET_LOW_STOCK_ITEMS);
 
-  const lowStockItems =
-    data?.items.filter((item: Item) => item.quantity <= item.minThreshold) ||
-    [];
+  const lowStockItems = data?.lowStockItems || [];
 
   return (
     <Card>
